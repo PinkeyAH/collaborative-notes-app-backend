@@ -1,0 +1,37 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t collaborative-notes-app:${CI_COMMIT_SHA} .
+
+test:
+  stage: test
+  image: node:16
+  script:
+    - npm install
+
+push-docker:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+    - docker tag collaborative-notes-app:${CI_COMMIT_SHA} your-dockerhub-username/collaborative-notes-app:${CI_COMMIT_SHA}
+    - docker push your-dockerhub-username/collaborative-notes-app:${CI_COMMIT_SHA}
+
+deploy-heroku:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - apk add --no-cache curl bash
+    - curl https://cli-assets.heroku.com/install.sh | sh
+    - echo $HEROKU_API_KEY | heroku container:login
+    - heroku container:push web --app your-heroku-app-name
+    - heroku container:release web --app your-heroku-app-name

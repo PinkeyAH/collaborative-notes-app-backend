@@ -1,3 +1,7 @@
+node_modules
+.env
+actions-runner
+
 # Logs
 logs
 *.log
